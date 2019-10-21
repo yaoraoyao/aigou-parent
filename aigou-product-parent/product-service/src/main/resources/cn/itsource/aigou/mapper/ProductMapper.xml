@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.itsource.aigou.mapper.ProductMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="cn.itsource.aigou.domain.Product">
+        <id column="id" property="id" />
+        <result column="createTime" property="createTime" />
+        <result column="updateTime" property="updateTime" />
+        <result column="name" property="name" />
+        <result column="subName" property="subName" />
+        <result column="code" property="code" />
+        <result column="product_type_id" property="productTypeId" />
+        <result column="onSaleTime" property="onSaleTime" />
+        <result column="offSaleTime" property="offSaleTime" />
+        <result column="brand_id" property="brandId" />
+        <result column="state" property="state" />
+        <result column="maxPrice" property="maxPrice" />
+        <result column="minPrice" property="minPrice" />
+        <result column="saleCount" property="saleCount" />
+        <result column="viewCount" property="viewCount" />
+        <result column="commentCount" property="commentCount" />
+        <result column="commentScore" property="commentScore" />
+        <result column="viewProperties" property="viewProperties" />
+        <result column="goodCommentCount" property="goodCommentCount" />
+        <result column="commonCommentCount" property="commonCommentCount" />
+        <result column="badCommentCount" property="badCommentCount" />
+        <result column="skuProperties" property="skuProperties" />
+        <association property="productType" javaType="cn.itsource.aigou.domain.ProductType">
+            <id column="product_type_id" property="id"/>
+            <result column="typename" property="name"/>
+        </association>
+        <association property="brand" javaType="cn.itsource.aigou.domain.Brand">
+            <id column="brand_id" property="id"/>
+            <result column="brandname" property="name"/>
+        </association>
+    </resultMap>
+
+    <update id="updateViewProperties">
+        update t_product
+        set viewProperties = #{viewProperties}
+        where id = #{productId}
+    </update>
+
+    <update id="updateSkuProperties">
+         update t_product
+        set skuProperties = #{skuProperties}
+        where id = #{productId}
+    </update>
+
+    <!--
+    批量上架
+    动态sql
+    foreach循环
+    collection 源
+    item 每次的元素
+    open 循环的结果以什么开始
+    close 循环的结果以什么结束
+    separator 每次遍历的元素之间的分隔符
+    -->
+    <update id="onSale">
+        update t_product
+        set onSaleTime=#{onSaleTime},state=1
+        where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+    <!--批量下架-->
+    <update id="offSale">
+        update t_product
+        set offSaleTime=#{offSaleTime},state=0
+        where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="queryPage" resultMap="BaseResultMap">
+        select p.*,pt.name typename,b.name brandname
+        from t_product p
+        left join t_product_type pt on p.product_type_id = pt.id
+        left join t_brand b on p.brand_id = b.id
+        <include refid="whereSql"></include>
+    </select>
+
+    <!--查询条件-->
+    <sql id="whereSql">
+        <where>
+            <if test="#{query.keyword}!=null">
+                and (
+                p.name like concat('%',#{query.keyword},'%')
+                or
+                p.subName like concat('%',#{query.keyword},'%')
+                )
+            </if>
+        </where>
+    </sql>
+
+
+</mapper>
